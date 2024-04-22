@@ -20,6 +20,7 @@
     :options []
     :handler handle/die}])
 
+; TODO: handle command arguments
 (def handlers
   {:interaction-create
    [(fn [event-type interaction]
