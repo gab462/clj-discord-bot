@@ -10,24 +10,29 @@
 
 (def bot (edn/read-string (slurp "resources/bot.edn")))
 
+(def commands
+  [{:name "ping"
+    :description "Replies with pong"
+    :options []
+    :handler handle/ping}
+   {:name "die"
+    :description "Kill bot"
+    :options []
+    :handler handle/die}])
+
 (def handlers
   {:interaction-create
    [(fn [event-type interaction]
-      (println interaction)
-      (case (get-in interaction [:data :name])
-        "ping" (handle/ping state interaction)
-        "die" (handle/die state interaction)))]})
-
-(def commands
-  [{:name "ping" :description "Replies with pong" :options []}
-   {:name "die" :description "Kill bot" :options []}])
+      (let [name (get-in interaction [:data :name])]
+        (when-let [handler (->> commands (filter #(= (:name %) name)) first :handler)]
+          (handler state interaction))))]})
 
 (defn -main [& args]
   (let [event-ch (a/chan 100)
         connection-ch (c/connect-bot! (:token bot) event-ch :intents #{})
         messaging-ch (m/start-connection! (:token bot))
         created-commands @(m/bulk-overwrite-guild-application-commands!
-                           messaging-ch (:app-id bot) (:guild bot) commands)]
+                           messaging-ch (:app-id bot) (:guild bot) (map #(dissoc % :handler) commands))]
     (reset! state {:connection connection-ch :event event-ch :messaging messaging-ch})
     (try (e/message-pump! event-ch (partial e/dispatch-handlers handlers))
       (finally
