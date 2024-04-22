@@ -24,7 +24,7 @@
   {:interaction-create
    [(fn [event-type interaction]
       (let [name (get-in interaction [:data :name])]
-        (when-let [handler (->> commands (filter #(= (:name %) name)) first :handler)]
+        (when-let [handler (cond->> commands (filter #(= (:name %) name)) first :handler)]
           (handler state interaction))))]})
 
 (defn -main [& args]
