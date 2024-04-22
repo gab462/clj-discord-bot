@@ -24,16 +24,16 @@
 (def handlers
   {:interaction-create
    [(fn [event-type interaction]
-      (let [name (get-in interaction [:data :name])]
-        (when-let [handler (cond->> commands (filter #(= (:name %) name)) first :handler)]
-          (handler state interaction))))]})
+      (let [name (get-in interaction [:data :name])
+            handler (->> commands (filter #(= (:name %) name)) first :handler)]
+        (handler state interaction)))]})
 
 (defn -main [& args]
   (let [event-ch (a/chan 100)
         connection-ch (c/connect-bot! (:token bot) event-ch :intents #{})
         messaging-ch (m/start-connection! (:token bot))
         created-commands @(m/bulk-overwrite-guild-application-commands!
-                           messaging-ch (:app-id bot) (:guild bot) (map #(dissoc % :handler) commands))]
+                           messaging-ch (:app-id bot) (:guild-id bot) (map #(dissoc % :handler) commands))]
     (reset! state {:connection connection-ch :event event-ch :messaging messaging-ch})
     (try (e/message-pump! event-ch (partial e/dispatch-handlers handlers))
       (finally
