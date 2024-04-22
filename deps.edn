@@ -1,0 +1,3 @@
+{:mvn/local-repo ".m2"
+ :paths ["src" "resources"]
+ :deps {com.github.discljord/discljord {:mvn/version "1.3.1"}}}
